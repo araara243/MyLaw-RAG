@@ -1,0 +1,14 @@
+langchain
+langchain-google-genai
+langchain-community
+chromadb
+pinecone-client
+pypdf
+unstructured
+streamlit
+python-dotenv
+ragas
+requests
+beautifulsoup4
+tiktoken
+rank-bm25
