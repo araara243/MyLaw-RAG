@@ -70,7 +70,7 @@ class LegalChunk:
 
 # Regex patterns for Malaysian legal document structure
 SECTION_PATTERN = re.compile(
-    r"^(?:Section|Seksyen)\s+(\d+[A-Za-z]*)\b\.?\s*(.*)$",
+    r"^(?:(?:Section|Seksyen)\s+(\d+[A-Za-z]*)|(\d+[A-Za-z]*)\.)\s*(.*)$",
     re.IGNORECASE | re.MULTILINE
 )
 
@@ -88,6 +88,9 @@ SUBSECTION_PATTERN = re.compile(
 def find_sections(text: str) -> List[Dict[str, Any]]:
     """
     Find all sections in the text with their positions.
+    Returns all matches found by regex, sorted by position.
+    Structure-aware chunking (in chunk_document) handles merging small chunks 
+    (like TOC entries) and preserving large ones (Body sections).
     
     Returns a list of dicts with keys:
         - section_number: str
@@ -98,12 +101,22 @@ def find_sections(text: str) -> List[Dict[str, Any]]:
     sections = []
     
     for match in SECTION_PATTERN.finditer(text):
+        # Group 1 is for "Section X", Group 2 is for "X."
+        sec_num = match.group(1) or match.group(2)
+        title = match.group(3).strip() if match.group(3) else ""
+        
+        if not sec_num:
+            continue
+            
         sections.append({
-            "section_number": match.group(1),
-            "title": match.group(2).strip() if match.group(2) else "",
+            "section_number": sec_num,
+            "title": title,
             "start": match.start(),
             "end": None,  # Will be filled later
         })
+    
+    # Sort by start position
+    sections.sort(key=lambda x: x["start"])
     
     # Set end positions
     for i, section in enumerate(sections):
@@ -266,6 +279,8 @@ def chunk_document(
             chunks.append(chunk)
     
     # Process each section
+    seen_ids = {} # dictionary to track counts of each base chunk_id
+
     for section in sections:
         section_text = text[section["start"]:section["end"]].strip()
         current_part = find_current_part(text, section["start"])
@@ -290,8 +305,20 @@ def chunk_document(
                 )
                 continue
             
-            chunk_suffix = f"_{i+1}" if len(section_chunks) > 1 else ""
-            chunk_id = f"act_{act_number}_s{section['section_number']}{chunk_suffix}"
+            # Base ID generation
+            base_id = f"act_{act_number}_s{section['section_number']}"
+            
+            # Sub-chunk handling (from large section split)
+            if len(section_chunks) > 1:
+                base_id += f"_{i+1}"
+            
+            # Deduplication suffix handling
+            if base_id in seen_ids:
+                seen_ids[base_id] += 1
+                chunk_id = f"{base_id}_dup{seen_ids[base_id]}"
+            else:
+                seen_ids[base_id] = 0
+                chunk_id = base_id
             
             chunk = LegalChunk(
                 chunk_id=chunk_id,

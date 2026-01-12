@@ -105,6 +105,7 @@ def ingest_chunks_to_chroma(
 ) -> int:
     """
     Ingest legal chunks into ChromaDB.
+    Uses upsert to update existing chunks with new content.
     
     Args:
         chunks: List of chunk dictionaries.
@@ -115,24 +116,14 @@ def ingest_chunks_to_chroma(
         Number of chunks ingested.
     """
     try:
-        # Check existing documents
-        existing_ids = set(collection.get()["ids"])
-        
-        # Filter out already ingested chunks
-        new_chunks = [c for c in chunks if c["chunk_id"] not in existing_ids]
-        
-        if not new_chunks:
-            logger.info("All chunks already ingested")
-            return 0
-        
-        logger.info(f"Ingesting {len(new_chunks)} new chunks (skipping {len(chunks) - len(new_chunks)} existing)")
+        logger.info(f"Ingesting/Updating {len(chunks)} chunks into ChromaDB")
         
         # Prepare data for insertion
         ids = []
         documents = []
         metadatas = []
         
-        for chunk in new_chunks:
+        for chunk in chunks:
             ids.append(chunk["chunk_id"])
             documents.append(chunk["content"])
             metadatas.append({
@@ -141,6 +132,7 @@ def ingest_chunks_to_chroma(
                 "part": chunk.get("part") or "",
                 "section_number": chunk.get("section_number") or "",
                 "section_title": chunk.get("section_title") or "",
+                # Ensure values are strings or numbers, no Nones
                 "token_count": chunk["token_count"],
             })
         
@@ -152,16 +144,16 @@ def ingest_chunks_to_chroma(
                 batch_docs = documents[i:i + batch_size]
                 batch_meta = metadatas[i:i + batch_size]
                 
-                collection.add(
+                collection.upsert(
                     ids=batch_ids,
                     documents=batch_docs,
                     metadatas=batch_meta
                 )
                 
                 total_inserted += len(batch_ids)
-                logger.info(f"Inserted batch {i // batch_size + 1}: {len(batch_ids)} chunks")
+                logger.info(f"Processed batch {i // batch_size + 1}: {len(batch_ids)} chunks")
             except Exception as batch_error:
-                logger.error(f"Error inserting batch {i // batch_size + 1}: {batch_error}")
+                logger.error(f"Error processing batch {i // batch_size + 1}: {batch_error}")
                 continue
         
         return total_inserted
