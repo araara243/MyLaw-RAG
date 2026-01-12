@@ -1,0 +1,174 @@
+{
+    "dataset_info": {
+        "name": "Malaysian Legal RAG Golden Dataset",
+        "version": "1.0",
+        "description": "20 legal questions with ground truth answers for evaluating the Malaysian Legal RAG system",
+        "acts_covered": [
+            "Contracts Act 1950 (Act 136)",
+            "Specific Relief Act 1951 (Act 137)",
+            "Housing Development (Control and Licensing) Act 1966 (Act 118)"
+        ]
+    },
+    "questions": [
+        {
+            "id": "Q001",
+            "question": "What is the definition of 'consideration' under Malaysian contract law?",
+            "expected_section": "Section 2(d)",
+            "expected_act": "Contracts Act 1950",
+            "ground_truth": "When at the desire of the promisor, the promisee or any other person has done or abstained from doing, or does or abstains from doing, or promises to do or to abstain from doing, something, such act or abstinence or promise is called a consideration for the promise.",
+            "category": "definition"
+        },
+        {
+            "id": "Q002",
+            "question": "What makes an agreement void due to coercion?",
+            "expected_section": "Section 15",
+            "expected_act": "Contracts Act 1950",
+            "ground_truth": "Coercion is the committing, or threatening to commit any act forbidden by the Penal Code, or the unlawful detaining or threatening to detain, any property, to the prejudice of any person whatever, with the intention of causing any person to enter into an agreement.",
+            "category": "void_agreements"
+        },
+        {
+            "id": "Q003",
+            "question": "What is 'free consent' in contract law?",
+            "expected_section": "Section 14",
+            "expected_act": "Contracts Act 1950",
+            "ground_truth": "Consent is said to be free when it is not caused by coercion, undue influence, fraud, misrepresentation, or mistake.",
+            "category": "definition"
+        },
+        {
+            "id": "Q004",
+            "question": "When can a contract be specifically enforced?",
+            "expected_section": "Section 11",
+            "expected_act": "Specific Relief Act 1951",
+            "ground_truth": "Specific performance of a contract shall be enforced when the act agreed to be done is such that compensation in money for its non-performance would not afford adequate relief, or when there exists no standard for ascertaining compensation.",
+            "category": "specific_performance"
+        },
+        {
+            "id": "Q005",
+            "question": "What are the licensing requirements for housing developers in Malaysia?",
+            "expected_section": "Section 5",
+            "expected_act": "Housing Development (Control and Licensing) Act 1966",
+            "ground_truth": "No person shall engage in or carry on or undertake or cause to be undertaken a housing development unless he is in possession of a licence issued under this Act.",
+            "category": "licensing"
+        },
+        {
+            "id": "Q006",
+            "question": "What is 'undue influence' in a contract?",
+            "expected_section": "Section 16",
+            "expected_act": "Contracts Act 1950",
+            "ground_truth": "A contract is said to be induced by undue influence where the relations subsisting between the parties are such that one of the parties is in a position to dominate the will of the other and uses that position to obtain an unfair advantage over the other.",
+            "category": "definition"
+        },
+        {
+            "id": "Q007",
+            "question": "What is fraud under the Contracts Act?",
+            "expected_section": "Section 17",
+            "expected_act": "Contracts Act 1950",
+            "ground_truth": "Fraud includes acts committed with intent to deceive or induce a person to enter into a contract, such as suggestion of fact which is not true, active concealment of fact, promise without intention of performing, or any other act fitted to deceive.",
+            "category": "definition"
+        },
+        {
+            "id": "Q008",
+            "question": "When is an agreement void for uncertainty?",
+            "expected_section": "Section 30",
+            "expected_act": "Contracts Act 1950",
+            "ground_truth": "Agreements the meaning of which is not certain, or capable of being made certain, are void.",
+            "category": "void_agreements"
+        },
+        {
+            "id": "Q009",
+            "question": "What is a Housing Development Account?",
+            "expected_section": "Section 7A",
+            "expected_act": "Housing Development (Control and Licensing) Act 1966",
+            "ground_truth": "Every licensed housing developer shall open and maintain a Housing Development Account with a bank or finance company for each housing development undertaken by the licensed housing developer.",
+            "category": "housing_development"
+        },
+        {
+            "id": "Q010",
+            "question": "Can a contract in restraint of trade be enforced?",
+            "expected_section": "Section 28",
+            "expected_act": "Contracts Act 1950",
+            "ground_truth": "Every agreement by which anyone is restrained from exercising a lawful profession, trade, or business of any kind, is to that extent void.",
+            "category": "void_agreements"
+        },
+        {
+            "id": "Q011",
+            "question": "What is the penalty for carrying on housing development without a license?",
+            "expected_section": "Section 5",
+            "expected_act": "Housing Development (Control and Licensing) Act 1966",
+            "ground_truth": "A person who engages in housing development without a licence shall be guilty of an offence and is liable to a fine or imprisonment or both.",
+            "category": "penalties"
+        },
+        {
+            "id": "Q012",
+            "question": "When can specific performance be refused?",
+            "expected_section": "Section 20",
+            "expected_act": "Specific Relief Act 1951",
+            "ground_truth": "Specific performance of a contract cannot be enforced in favour of a person who has become incapable of performing, or violates, any essential term of the contract.",
+            "category": "specific_performance"
+        },
+        {
+            "id": "Q013",
+            "question": "What makes an agreement without consideration valid?",
+            "expected_section": "Section 26",
+            "expected_act": "Contracts Act 1950",
+            "ground_truth": "An agreement without consideration is void unless it is in writing and registered, or is a promise to compensate for something done, or is a promise to pay a debt barred by limitation law.",
+            "category": "consideration"
+        },
+        {
+            "id": "Q014",
+            "question": "What is misrepresentation under contract law?",
+            "expected_section": "Section 18",
+            "expected_act": "Contracts Act 1950",
+            "ground_truth": "Misrepresentation includes positive assertion in a manner not warranted by information, any breach of duty which gives advantage to the person committing it by misleading another, or causing a party to make a mistake as to the substance of the thing which is the subject of the agreement.",
+            "category": "definition"
+        },
+        {
+            "id": "Q015",
+            "question": "Can a court grant an injunction to prevent breach of contract?",
+            "expected_section": "Section 50",
+            "expected_act": "Specific Relief Act 1951",
+            "ground_truth": "An injunction may be granted to prevent the breach of an obligation existing in favour of the applicant, whether expressly or by implication.",
+            "category": "injunctions"
+        },
+        {
+            "id": "Q016",
+            "question": "What happens if both parties are under a mistake as to a matter of fact?",
+            "expected_section": "Section 21",
+            "expected_act": "Contracts Act 1950",
+            "ground_truth": "Where both the parties to an agreement are under a mistake as to a matter of fact essential to the agreement, the agreement is void.",
+            "category": "void_agreements"
+        },
+        {
+            "id": "Q017",
+            "question": "What is the Controller's power regarding housing developers?",
+            "expected_section": "Section 11",
+            "expected_act": "Housing Development (Control and Licensing) Act 1966",
+            "ground_truth": "The Controller may at any time revoke or suspend a licence if the housing developer has failed to comply with any condition of the licence or any provision of this Act.",
+            "category": "regulatory"
+        },
+        {
+            "id": "Q018",
+            "question": "What are wagering agreements?",
+            "expected_section": "Section 31",
+            "expected_act": "Contracts Act 1950",
+            "ground_truth": "Agreements by way of wager are void; and no suit shall be brought for recovering anything alleged to be won on any wager.",
+            "category": "void_agreements"
+        },
+        {
+            "id": "Q019",
+            "question": "When can rectification of an instrument be granted?",
+            "expected_section": "Section 31",
+            "expected_act": "Specific Relief Act 1951",
+            "ground_truth": "When through fraud or a mutual mistake of the parties, a contract or other instrument in writing does not express their real intention, either party may institute a suit to have the instrument rectified.",
+            "category": "rectification"
+        },
+        {
+            "id": "Q020",
+            "question": "What is the effect of agreements in restraint of marriage?",
+            "expected_section": "Section 27",
+            "expected_act": "Contracts Act 1950",
+            "ground_truth": "Every agreement in restraint of the marriage of any person, other than a minor, is void.",
+            "category": "void_agreements"
+        }
+    ]
+}

@@ -1,0 +1,251 @@
+{
+  "metrics": {
+    "hit_rate_at_1": 0.95,
+    "hit_rate_at_3": 1.0,
+    "hit_rate_at_5": 1.0,
+    "mrr": 0.975,
+    "total_questions": 20
+  },
+  "individual_results": [
+    {
+      "question_id": "Q001",
+      "question": "What is the definition of 'consideration' under Malaysian contract law?",
+      "expected": "Contracts Act 1950, Section 2(d)",
+      "hit_at_3": true,
+      "reciprocal_rank": 0.5,
+      "top_sources": [
+        "Specific Relief Act 1951, Section 43",
+        "Contracts Act 1950, Section 179",
+        "Contracts Act 1950, Section 1"
+      ]
+    },
+    {
+      "question_id": "Q002",
+      "question": "What makes an agreement void due to coercion?",
+      "expected": "Contracts Act 1950, Section 15",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Contracts Act 1950, Section 12",
+        "Contracts Act 1950, Section 179",
+        "Contracts Act 1950, Section 32"
+      ]
+    },
+    {
+      "question_id": "Q003",
+      "question": "What is 'free consent' in contract law?",
+      "expected": "Contracts Act 1950, Section 14",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Contracts Act 1950, Section 12",
+        "Contracts Act 1950, Section 179",
+        "Contracts Act 1950, Section 179"
+      ]
+    },
+    {
+      "question_id": "Q004",
+      "question": "When can a contract be specifically enforced?",
+      "expected": "Specific Relief Act 1951, Section 11",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Specific Relief Act 1951, Section 11",
+        "Specific Relief Act 1951, Section 43",
+        "Specific Relief Act 1951, Section 43"
+      ]
+    },
+    {
+      "question_id": "Q005",
+      "question": "What are the licensing requirements for housing developers in Malaysia?",
+      "expected": "Housing Development (Control and Licensing) Act 1966, Section 5",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Housing Development (Control and Licensing) Act 1966, Section 17",
+        "Housing Development (Control and Licensing) Act 1966, Section 1",
+        "Housing Development (Control and Licensing) Act 1966, Section 16"
+      ]
+    },
+    {
+      "question_id": "Q006",
+      "question": "What is 'undue influence' in a contract?",
+      "expected": "Contracts Act 1950, Section 16",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Contracts Act 1950, Section 12",
+        "Contracts Act 1950, Section 179",
+        "Contracts Act 1950, Section 179"
+      ]
+    },
+    {
+      "question_id": "Q007",
+      "question": "What is fraud under the Contracts Act?",
+      "expected": "Contracts Act 1950, Section 17",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Contracts Act 1950, Section 179",
+        "Contracts Act 1950, Section 12",
+        "Specific Relief Act 1951, Section 43"
+      ]
+    },
+    {
+      "question_id": "Q008",
+      "question": "When is an agreement void for uncertainty?",
+      "expected": "Contracts Act 1950, Section 30",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Contracts Act 1950, Section 12",
+        "Contracts Act 1950, Section 179",
+        "Contracts Act 1950, Section 32"
+      ]
+    },
+    {
+      "question_id": "Q009",
+      "question": "What is a Housing Development Account?",
+      "expected": "Housing Development (Control and Licensing) Act 1966, Section 7A",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Housing Development (Control and Licensing) Act 1966, Section 9",
+        "Housing Development (Control and Licensing) Act 1966, Section 4",
+        "Housing Development (Control and Licensing) Act 1966, Section 9"
+      ]
+    },
+    {
+      "question_id": "Q010",
+      "question": "Can a contract in restraint of trade be enforced?",
+      "expected": "Contracts Act 1950, Section 28",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Contracts Act 1950, Section 12",
+        "Specific Relief Act 1951, Section 43",
+        "Specific Relief Act 1951, Section 43"
+      ]
+    },
+    {
+      "question_id": "Q011",
+      "question": "What is the penalty for carrying on housing development without a license?",
+      "expected": "Housing Development (Control and Licensing) Act 1966, Section 5",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Housing Development (Control and Licensing) Act 1966, Section 16",
+        "Housing Development (Control and Licensing) Act 1966, Section 9",
+        "Housing Development (Control and Licensing) Act 1966, Section 4"
+      ]
+    },
+    {
+      "question_id": "Q012",
+      "question": "When can specific performance be refused?",
+      "expected": "Specific Relief Act 1951, Section 20",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Specific Relief Act 1951, Section 43",
+        "Specific Relief Act 1951, Section 43",
+        "Specific Relief Act 1951, Section 43"
+      ]
+    },
+    {
+      "question_id": "Q013",
+      "question": "What makes an agreement without consideration valid?",
+      "expected": "Contracts Act 1950, Section 26",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Contracts Act 1950, Section 12",
+        "Specific Relief Act 1951, Section 43",
+        "Contracts Act 1950, Section 179"
+      ]
+    },
+    {
+      "question_id": "Q014",
+      "question": "What is misrepresentation under contract law?",
+      "expected": "Contracts Act 1950, Section 18",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Contracts Act 1950, Section 179",
+        "Contracts Act 1950, Section 12",
+        "Contracts Act 1950, Section 179"
+      ]
+    },
+    {
+      "question_id": "Q015",
+      "question": "Can a court grant an injunction to prevent breach of contract?",
+      "expected": "Specific Relief Act 1951, Section 50",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Specific Relief Act 1951, Section 43",
+        "Specific Relief Act 1951, Section 43",
+        "Specific Relief Act 1951, Section 43"
+      ]
+    },
+    {
+      "question_id": "Q016",
+      "question": "What happens if both parties are under a mistake as to a matter of fact?",
+      "expected": "Contracts Act 1950, Section 21",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Contracts Act 1950, Section 12",
+        "Contracts Act 1950, Section 179",
+        "Contracts Act 1950, Section 179"
+      ]
+    },
+    {
+      "question_id": "Q017",
+      "question": "What is the Controller's power regarding housing developers?",
+      "expected": "Housing Development (Control and Licensing) Act 1966, Section 11",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Housing Development (Control and Licensing) Act 1966, Section 4",
+        "Housing Development (Control and Licensing) Act 1966, Section 1",
+        "Housing Development (Control and Licensing) Act 1966, Section 17"
+      ]
+    },
+    {
+      "question_id": "Q018",
+      "question": "What are wagering agreements?",
+      "expected": "Contracts Act 1950, Section 31",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Contracts Act 1950, Section 12",
+        "Contracts Act 1950, Section 179",
+        "Specific Relief Act 1951, Section 43"
+      ]
+    },
+    {
+      "question_id": "Q019",
+      "question": "When can rectification of an instrument be granted?",
+      "expected": "Specific Relief Act 1951, Section 31",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Specific Relief Act 1951, Section 27",
+        "Specific Relief Act 1951, Section 43",
+        "Specific Relief Act 1951, Section 43"
+      ]
+    },
+    {
+      "question_id": "Q020",
+      "question": "What is the effect of agreements in restraint of marriage?",
+      "expected": "Contracts Act 1950, Section 27",
+      "hit_at_3": true,
+      "reciprocal_rank": 1.0,
+      "top_sources": [
+        "Contracts Act 1950, Section 12",
+        "Specific Relief Act 1951, Section 43",
+        "Contracts Act 1950, Section 179"
+      ]
+    }
+  ]
+}
