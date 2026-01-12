@@ -13,36 +13,45 @@ Key features:
 """
 
 import json
-import logging
 import re
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict, Any, Union
 
 import tiktoken
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+from config import (
+    RAGConfig,
+    get_processed_dir,
+    setup_logging
 )
-logger = logging.getLogger(__name__)
+
+# Configure logging
+logger = setup_logging(__name__)
 
 # Token counting
-TOKENIZER = None
+TOKENIZER: Optional[Any] = None
 
 
-def get_tokenizer():
+def get_tokenizer() -> Any:
     """Lazy load the tokenizer."""
     global TOKENIZER
     if TOKENIZER is None:
-        TOKENIZER = tiktoken.get_encoding("cl100k_base")  # GPT-4 encoding
+        try:
+            TOKENIZER = tiktoken.get_encoding("cl100k_base")  # GPT-4 encoding
+        except Exception as e:
+            logger.error(f"Failed to load tokenizer: {e}")
+            raise
     return TOKENIZER
 
 
 def count_tokens(text: str) -> int:
     """Count tokens in text using tiktoken."""
-    return len(get_tokenizer().encode(text))
+    try:
+        return len(get_tokenizer().encode(text))
+    except Exception as e:
+        logger.warning(f"Error counting tokens, returning 0: {e}")
+        return 0
 
 
 @dataclass
@@ -57,16 +66,6 @@ class LegalChunk:
     content: str
     token_count: int
     start_position: int  # Character position in original text
-
-
-def get_project_root() -> Path:
-    """Get the project root directory."""
-    return Path(__file__).resolve().parent.parent.parent
-
-
-def get_processed_data_dir() -> Path:
-    """Get the processed data directory."""
-    return get_project_root() / "data" / "processed"
 
 
 # Regex patterns for Malaysian legal document structure
@@ -86,7 +85,7 @@ SUBSECTION_PATTERN = re.compile(
 )
 
 
-def find_sections(text: str) -> list[dict]:
+def find_sections(text: str) -> List[Dict[str, Any]]:
     """
     Find all sections in the text with their positions.
     
@@ -145,7 +144,7 @@ def find_current_part(text: str, position: int) -> Optional[str]:
 def split_large_section(
     section_text: str,
     max_tokens: int = 1000
-) -> list[str]:
+) -> List[str]:
     """
     Split a large section into smaller chunks while preserving subsection boundaries.
     
@@ -208,10 +207,10 @@ def split_large_section(
 
 
 def chunk_document(
-    document: dict,
+    document: Dict[str, Any],
     max_tokens: int = 1000,
     min_tokens: int = 50
-) -> list[LegalChunk]:
+) -> List[LegalChunk]:
     """
     Chunk a processed legal document into semantic chunks.
     
@@ -225,12 +224,12 @@ def chunk_document(
     Returns:
         List of LegalChunk objects.
     """
-    text = document["cleaned_text"]
-    metadata = document["metadata"]
+    text = document.get("cleaned_text", "")
+    metadata = document.get("metadata", {})
     act_name = metadata.get("act_name", "Unknown Act")
     act_number = metadata.get("act_number", 0)
     
-    chunks = []
+    chunks: List[LegalChunk] = []
     sections = find_sections(text)
     
     if not sections:
@@ -310,7 +309,7 @@ def chunk_document(
     return chunks
 
 
-def process_all_documents(max_tokens: int = 1000) -> dict:
+def process_all_documents(max_tokens: int = 1000) -> Dict[str, Dict[str, int]]:
     """
     Process all documents in the processed directory and create chunks.
     
@@ -320,7 +319,12 @@ def process_all_documents(max_tokens: int = 1000) -> dict:
     Returns:
         Dictionary mapping filenames to chunk statistics.
     """
-    processed_dir = get_processed_data_dir()
+    processed_dir = get_processed_dir()
+    
+    if not processed_dir.exists():
+        logger.error(f"Processed directory not found: {processed_dir}")
+        return {}
+        
     json_files = list(processed_dir.glob("*.json"))
     
     # Filter out chunked files
@@ -333,29 +337,33 @@ def process_all_documents(max_tokens: int = 1000) -> dict:
     logger.info(f"Max tokens per chunk: {max_tokens}")
     logger.info("=" * 60)
     
-    results = {}
+    results: Dict[str, Dict[str, int]] = {}
     all_chunks = []
     
     for json_path in json_files:
         logger.info(f"\nProcessing: {json_path.name}")
         
-        with open(json_path, "r", encoding="utf-8") as f:
-            document = json.load(f)
-        
-        chunks = chunk_document(document, max_tokens)
-        all_chunks.extend(chunks)
-        
-        # Save chunks for this document
-        chunks_path = json_path.with_name(json_path.stem + "_chunks.json")
-        with open(chunks_path, "w", encoding="utf-8") as f:
-            json.dump([asdict(c) for c in chunks], f, ensure_ascii=False, indent=2)
-        
-        logger.info(f"Created {len(chunks)} chunks -> {chunks_path.name}")
-        results[json_path.name] = {
-            "chunk_count": len(chunks),
-            "total_tokens": sum(c.token_count for c in chunks),
-            "avg_tokens": sum(c.token_count for c in chunks) // len(chunks) if chunks else 0
-        }
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                document = json.load(f)
+            
+            chunks = chunk_document(document, max_tokens)
+            all_chunks.extend(chunks)
+            
+            # Save chunks for this document
+            chunks_path = json_path.with_name(json_path.stem + "_chunks.json")
+            with open(chunks_path, "w", encoding="utf-8") as f:
+                json.dump([asdict(c) for c in chunks], f, ensure_ascii=False, indent=2)
+            
+            logger.info(f"Created {len(chunks)} chunks -> {chunks_path.name}")
+            results[json_path.name] = {
+                "chunk_count": len(chunks),
+                "total_tokens": sum(c.token_count for c in chunks),
+                "avg_tokens": sum(c.token_count for c in chunks) // len(chunks) if chunks else 0
+            }
+        except Exception as e:
+            logger.error(f"Failed to process {json_path.name}: {e}")
+            continue
     
     # Summary
     logger.info("\n" + "=" * 60)
@@ -366,7 +374,7 @@ def process_all_documents(max_tokens: int = 1000) -> dict:
             f"  {filename}: {stats['chunk_count']} chunks, "
             f"avg {stats['avg_tokens']} tokens"
         )
-        total_chunks += stats["chunk_count"]
+        total_chunks += stats['chunk_count']
     logger.info(f"\nTotal chunks created: {total_chunks}")
     logger.info("=" * 60)
     
@@ -374,4 +382,5 @@ def process_all_documents(max_tokens: int = 1000) -> dict:
 
 
 if __name__ == "__main__":
-    process_all_documents()
+    config = RAGConfig()
+    process_all_documents(max_tokens=config.chunk_size)

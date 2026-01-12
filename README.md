@@ -30,26 +30,31 @@ Based on evaluation against a 20-question golden dataset:
 
 ### System Components
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Streamlit UI                              │
-│                    (src/app/app.py)                              │
-└─────────────────────────┬───────────────────────────────────────┘
-                          │
-┌─────────────────────────▼───────────────────────────────────────┐
-│                     RAG Chain                                    │
-│                (src/generation/rag_chain.py)                     │
-│  ┌─────────────────┐              ┌─────────────────────────┐   │
-│  │ Hybrid Retriever│              │   Google Gemini LLM     │   │
-│  │ (BM25 + Vector) │──────────────│ (langchain-google-genai)│   │
-│  └────────┬────────┘              └─────────────────────────┘   │
-└───────────┼─────────────────────────────────────────────────────┘
-            │
-┌───────────▼─────────────────────────────────────────────────────┐
-│                      ChromaDB                                    │
-│              (data/vector_db/)                                   │
-│         Embeddings: all-MiniLM-L6-v2                            │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    User[User] -->|Queries| Streamlit[Streamlit UI]
+    Streamlit -->|Sends Query| RAGChain[Legal RAG Chain]
+    
+    subgraph "Retrieval Layer"
+        RAGChain -->|Query| HybridRetriever[Hybrid Retriever]
+        HybridRetriever -->|Semantic Search| ChromaDB[(ChromaDB)]
+        HybridRetriever -->|Keyword Search| BM25[BM25 Index]
+        ChromaDB -->|Vector Results| HybridRetriever
+        BM25 -->|Keyword Results| HybridRetriever
+    end
+    
+    subgraph "Generation Layer"
+        HybridRetriever -->|Top k Documents| Gemini[Google Gemini LLM]
+        Gemini -->|Answer + Citations| Streamlit
+    end
+    
+    subgraph "Ingestion Pipeline"
+        PDFs[PDF Documents] --> Scraper[AGC Scraper]
+        Scraper --> Extractor[Text Extractor]
+        Extractor --> Chunker[Semantic Chunker]
+        Chunker -->|Chunks + Metadata| ChromaDB
+        Chunker -->|Tokenized Text| BM25
+    end
 ```
 
 ### Technology Stack
@@ -76,6 +81,7 @@ MyLaw-RAG/
 │   ├── processed/              # Extracted text and chunks (JSON)
 │   └── vector_db/              # ChromaDB persistence directory
 ├── src/
+│   ├── config.py               # Centralized configuration
 │   ├── ingestion/
 │   │   ├── agc_scraper.py      # Downloads PDFs from AGC website
 │   │   ├── text_extractor.py   # PDF to text extraction with cleaning
@@ -140,7 +146,7 @@ MyLaw-RAG/
    Edit `.env` and set:
 
    ```
-   GOOGLE_API_KEY=your_api_key_here
+   GEMINI_API_KEY=your_api_key_here
    ```
 
    To obtain a Google API key, visit [Google AI Studio](https://aistudio.google.com/).
@@ -242,26 +248,31 @@ Results are saved to `tests/evaluation_results.json`.
 
 ## Configuration
 
-### Model Configuration
+The project uses a centralized configuration file at `src/config.py`. You can modify the `RAGConfig` dataclass to adjust parameters such as:
 
-The default LLM model can be changed in `src/generation/rag_chain.py`:
+- **Chunking**: `chunk_size`, `chunk_overlap`
+- **Retrieval**: `top_k`, `semantic_weight`, `keyword_weight`, `rrf_k`
+- **Models**: `embedding_model`, `llm_model`, `temperature`
+- **Vector DB**: `collection_name`
 
-```python
-LegalRAGChain(
-    model_name="gemini-2.0-flash-lite",  # or gemini-1.5-pro
-    temperature=0.1,
-    n_results=5,
-    retrieval_method="hybrid"  # or "semantic", "keyword"
-)
-```
+Environment variables are managed via `.env` file (see `.env.example`).
 
-### Retrieval Configuration
+---
 
-Retrieval parameters can be adjusted in `src/retrieval/hybrid_retriever.py`:
+## Contribution
 
-- `semantic_weight`: Weight for semantic search results (default: 0.5)
-- `keyword_weight`: Weight for BM25 results (default: 0.5)
-- `k_constant`: RRF fusion parameter (default: 60)
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature/YourFeature`).
+3. Commit your changes (`git commit -m 'Add some feature'`).
+4. Push to the branch (`git push origin feature/YourFeature`).
+5. Open a Pull Request.
+
+Please ensure you:
+- Add type hints to new functions.
+- Add docstrings obeying Google style.
+- Run tests before submitting.
 
 ---
 

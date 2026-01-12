@@ -13,22 +13,21 @@ Hybrid search is critical for legal documents because:
 The retriever uses Reciprocal Rank Fusion (RRF) to combine results.
 """
 
-import json
-import logging
 import re
 from collections import defaultdict
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict, Tuple, Any
 
 from rank_bm25 import BM25Okapi
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+from config import (
+    RAGConfig,
+    get_vector_db_dir,
+    setup_logging
 )
-logger = logging.getLogger(__name__)
+
+# Configure logging
+logger = setup_logging(__name__)
 
 
 @dataclass
@@ -44,21 +43,6 @@ class RetrievalResult:
     retrieval_method: str  # "semantic", "keyword", or "hybrid"
 
 
-def get_project_root() -> Path:
-    """Get the project root directory."""
-    return Path(__file__).resolve().parent.parent.parent
-
-
-def get_vector_db_dir() -> Path:
-    """Get the vector database directory."""
-    return get_project_root() / "data" / "vector_db"
-
-
-def get_processed_data_dir() -> Path:
-    """Get the processed data directory."""
-    return get_project_root() / "data" / "processed"
-
-
 class HybridRetriever:
     """
     Hybrid retriever combining semantic and keyword search.
@@ -69,70 +53,78 @@ class HybridRetriever:
     
     def __init__(
         self,
-        collection_name: str = "malaysian_legal_acts",
-        semantic_weight: float = 0.5,
-        keyword_weight: float = 0.5,
-        rrf_k: int = 60
+        config: Optional[RAGConfig] = None
     ):
         """
         Initialize the hybrid retriever.
         
         Args:
-            collection_name: Name of the ChromaDB collection.
-            semantic_weight: Weight for semantic search scores (0-1).
-            keyword_weight: Weight for keyword search scores (0-1).
-            rrf_k: RRF constant (higher = more emphasis on lower ranks).
+            config: Optional RAGConfig object. If None, uses defaults.
         """
-        self.collection_name = collection_name
-        self.semantic_weight = semantic_weight
-        self.keyword_weight = keyword_weight
-        self.rrf_k = rrf_k
+        self.config = config or RAGConfig()
+        
+        self.collection_name = self.config.collection_name
+        self.semantic_weight = self.config.semantic_weight
+        self.keyword_weight = self.config.keyword_weight
+        self.rrf_k = self.config.rrf_k
         
         # Initialize components
-        self._collection = None
-        self._bm25 = None
-        self._documents = None
-        self._doc_ids = None
-        self._doc_metadata = None
+        self._collection: Any = None
+        self._bm25: Optional[BM25Okapi] = None
+        self._documents: List[str] = []
+        self._doc_ids: List[str] = []
+        self._doc_metadata: List[Dict[str, Any]] = []
         
         self._initialize()
     
-    def _initialize(self):
+    def _initialize(self) -> None:
         """Initialize ChromaDB and BM25 index."""
-        import chromadb
-        from chromadb.config import Settings
-        
-        # Load ChromaDB collection
-        db_path = str(get_vector_db_dir())
-        client = chromadb.PersistentClient(
-            path=db_path,
-            settings=Settings(anonymized_telemetry=False)
-        )
-        
-        self._collection = client.get_collection(name=self.collection_name)
-        
-        # Get all documents for BM25 indexing
-        all_docs = self._collection.get(include=["documents", "metadatas"])
-        
-        self._doc_ids = all_docs["ids"]
-        self._documents = all_docs["documents"]
-        self._doc_metadata = all_docs["metadatas"]
-        
-        # Build BM25 index
-        tokenized_docs = [self._tokenize(doc) for doc in self._documents]
-        self._bm25 = BM25Okapi(tokenized_docs)
-        
-        logger.info(
-            f"Initialized HybridRetriever with {len(self._documents)} documents"
-        )
+        try:
+            import chromadb
+            from chromadb.config import Settings
+            
+            # Load ChromaDB collection
+            db_path = str(get_vector_db_dir())
+            client = chromadb.PersistentClient(
+                path=db_path,
+                settings=Settings(anonymized_telemetry=False)
+            )
+            
+            self._collection = client.get_collection(name=self.collection_name)
+            
+            # Get all documents for BM25 indexing
+            all_docs = self._collection.get(include=["documents", "metadatas"])
+            
+            if not all_docs or not all_docs["ids"]:
+                logger.warning(f"Collection {self.collection_name} is empty or not found.")
+                return
+
+            self._doc_ids = all_docs["ids"]
+            # Ensure documents are strings, handle potential None values
+            self._documents = [doc if doc is not None else "" for doc in all_docs["documents"]]
+            self._doc_metadata = all_docs["metadatas"]
+            
+            # Build BM25 index
+            tokenized_docs = [self._tokenize(doc) for doc in self._documents]
+            self._bm25 = BM25Okapi(tokenized_docs)
+            
+            logger.info(
+                f"Initialized HybridRetriever with {len(self._documents)} documents"
+            )
+        except Exception as e:
+            logger.error(f"Failed to initialize HybridRetriever: {e}")
+            raise
     
-    def _tokenize(self, text: str) -> list[str]:
+    def _tokenize(self, text: str) -> List[str]:
         """
         Tokenize text for BM25 indexing.
         
         Uses simple whitespace + punctuation tokenization.
         Preserves legal terms like "Section 10" as single tokens.
         """
+        if not text:
+            return []
+            
         # Lowercase
         text = text.lower()
         
@@ -148,37 +140,52 @@ class HybridRetriever:
         self,
         query: str,
         n_results: int
-    ) -> list[tuple[str, float]]:
+    ) -> List[Tuple[str, float]]:
         """
         Perform semantic search using ChromaDB.
         
         Returns list of (doc_id, distance) tuples.
         """
-        results = self._collection.query(
-            query_texts=[query],
-            n_results=n_results,
-            include=["distances"]
-        )
-        
-        # Convert distances to similarity scores (1 - distance for cosine)
-        return [
-            (doc_id, 1 - distance)
-            for doc_id, distance in zip(
-                results["ids"][0],
-                results["distances"][0]
+        if not self._collection:
+            logger.error("Collection not initialized.")
+            return []
+            
+        try:
+            results = self._collection.query(
+                query_texts=[query],
+                n_results=n_results,
+                include=["distances"]
             )
-        ]
+            
+            if not results["ids"]:
+                return []
+
+            # Convert distances to similarity scores (1 - distance for cosine)
+            return [
+                (doc_id, 1 - distance)
+                for doc_id, distance in zip(
+                    results["ids"][0],
+                    results["distances"][0]
+                )
+            ]
+        except Exception as e:
+            logger.error(f"Semantic search failed: {e}")
+            return []
     
     def _keyword_search(
         self,
         query: str,
         n_results: int
-    ) -> list[tuple[str, float]]:
+    ) -> List[Tuple[str, float]]:
         """
         Perform keyword search using BM25.
         
         Returns list of (doc_id, score) tuples.
         """
+        if not self._bm25:
+            logger.warning("BM25 index not initialized.")
+            return []
+            
         tokenized_query = self._tokenize(query)
         scores = self._bm25.get_scores(tokenized_query)
         
@@ -198,9 +205,9 @@ class HybridRetriever:
     
     def _reciprocal_rank_fusion(
         self,
-        semantic_results: list[tuple[str, float]],
-        keyword_results: list[tuple[str, float]]
-    ) -> dict[str, float]:
+        semantic_results: List[Tuple[str, float]],
+        keyword_results: List[Tuple[str, float]]
+    ) -> Dict[str, float]:
         """
         Combine results using Reciprocal Rank Fusion.
         
@@ -213,7 +220,7 @@ class HybridRetriever:
         Returns:
             Dictionary mapping doc_id to combined RRF score.
         """
-        rrf_scores = defaultdict(float)
+        rrf_scores: Dict[str, float] = defaultdict(float)
         
         # Add semantic ranks
         for rank, (doc_id, _) in enumerate(semantic_results, start=1):
@@ -230,7 +237,7 @@ class HybridRetriever:
         query: str,
         n_results: int = 5,
         method: str = "hybrid"
-    ) -> list[RetrievalResult]:
+    ) -> List[RetrievalResult]:
         """
         Retrieve relevant legal chunks for a query.
         
@@ -242,57 +249,66 @@ class HybridRetriever:
         Returns:
             List of RetrievalResult objects, sorted by relevance.
         """
-        # Perform searches based on method
-        semantic_results = []
-        keyword_results = []
-        
-        if method in ("hybrid", "semantic"):
-            semantic_results = self._semantic_search(query, n_results * 2)
-        
-        if method in ("hybrid", "keyword"):
-            keyword_results = self._keyword_search(query, n_results * 2)
-        
-        # Combine results
-        if method == "hybrid":
-            combined_scores = self._reciprocal_rank_fusion(
-                semantic_results, keyword_results
-            )
-        elif method == "semantic":
-            combined_scores = {doc_id: score for doc_id, score in semantic_results}
-        else:  # keyword
-            combined_scores = {doc_id: score for doc_id, score in keyword_results}
-        
-        # Sort by score and take top N
-        sorted_ids = sorted(
-            combined_scores.keys(),
-            key=lambda x: combined_scores[x],
-            reverse=True
-        )[:n_results]
-        
-        # Build result objects
-        results = []
-        for doc_id in sorted_ids:
-            # Find document index
-            idx = self._doc_ids.index(doc_id)
-            metadata = self._doc_metadata[idx]
+        try:
+            # Perform searches based on method
+            semantic_results: List[Tuple[str, float]] = []
+            keyword_results: List[Tuple[str, float]] = []
             
-            result = RetrievalResult(
-                chunk_id=doc_id,
-                content=self._documents[idx],
-                act_name=metadata.get("act_name", ""),
-                act_number=metadata.get("act_number", 0),
-                section_number=metadata.get("section_number", ""),
-                section_title=metadata.get("section_title", ""),
-                score=combined_scores[doc_id],
-                retrieval_method=method
-            )
-            results.append(result)
-        
-        return results
+            if method in ("hybrid", "semantic"):
+                semantic_results = self._semantic_search(query, n_results * 2)
+            
+            if method in ("hybrid", "keyword"):
+                keyword_results = self._keyword_search(query, n_results * 2)
+            
+            # Combine results
+            combined_scores: Dict[str, float] = {}
+            if method == "hybrid":
+                combined_scores = self._reciprocal_rank_fusion(
+                    semantic_results, keyword_results
+                )
+            elif method == "semantic":
+                combined_scores = {doc_id: score for doc_id, score in semantic_results}
+            else:  # keyword
+                combined_scores = {doc_id: score for doc_id, score in keyword_results}
+            
+            # Sort by score and take top N
+            sorted_ids = sorted(
+                combined_scores.keys(),
+                key=lambda x: combined_scores[x],
+                reverse=True
+            )[:n_results]
+            
+            # Build result objects
+            results = []
+            for doc_id in sorted_ids:
+                if doc_id not in self._doc_ids:
+                    continue 
+
+                # Find document index
+                idx = self._doc_ids.index(doc_id)
+                metadata = self._doc_metadata[idx]
+                
+                result = RetrievalResult(
+                    chunk_id=doc_id,
+                    content=self._documents[idx],
+                    act_name=metadata.get("act_name", ""),
+                    act_number=metadata.get("act_number", 0),
+                    section_number=metadata.get("section_number", ""),
+                    section_title=metadata.get("section_title", ""),
+                    score=combined_scores[doc_id],
+                    retrieval_method=method
+                )
+                results.append(result)
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Retrieval failed for query '{query}': {e}")
+            return []
     
     def format_context(
         self,
-        results: list[RetrievalResult],
+        results: List[RetrievalResult],
         include_metadata: bool = True
     ) -> str:
         """
@@ -325,32 +341,35 @@ class HybridRetriever:
 
 def test_retriever():
     """Test the hybrid retriever with sample queries."""
-    retriever = HybridRetriever()
-    
-    test_queries = [
-        "What is the definition of consideration in contract law?",
-        "Section 10 free consent",
-        "housing developer license requirements",
-        "specific performance contract enforcement",
-    ]
-    
-    print("=" * 70)
-    print("Hybrid Retriever Test")
-    print("=" * 70)
-    
-    for query in test_queries:
-        print(f"\nQuery: {query}")
-        print("-" * 50)
+    try:
+        retriever = HybridRetriever()
         
-        # Test all methods
-        for method in ["semantic", "keyword", "hybrid"]:
-            results = retriever.retrieve(query, n_results=3, method=method)
-            print(f"\n  [{method.upper()}]")
-            for r in results:
-                print(
-                    f"    - {r.act_name} Section {r.section_number} "
-                    f"(score: {r.score:.4f})"
-                )
+        test_queries = [
+            "What is the definition of consideration in contract law?",
+            "Section 10 free consent",
+            "housing developer license requirements",
+            "specific performance contract enforcement",
+        ]
+        
+        print("=" * 70)
+        print("Hybrid Retriever Test")
+        print("=" * 70)
+        
+        for query in test_queries:
+            print(f"\nQuery: {query}")
+            print("-" * 50)
+            
+            # Test all methods
+            for method in ["semantic", "keyword", "hybrid"]:
+                results = retriever.retrieve(query, n_results=3, method=method)
+                print(f"\n  [{method.upper()}]")
+                for r in results:
+                    print(
+                        f"    - {r.act_name} Section {r.section_number} "
+                        f"(score: {r.score:.4f})"
+                    )
+    except Exception as e:
+        logger.error(f"Test failed: {e}")
 
 
 if __name__ == "__main__":
